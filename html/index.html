@@ -1,45 +1,39 @@
 <!DOCTYPE html>
 <html lang="en">
 	<head>
-		<title>three.js webgl - geometry - terrain</title>
+		<title>Mistral</title>
 		<meta charset="utf-8">
 		<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
-		<style>
-			body {
-				color: #61443e;
-				font-family:Monospace;
-				font-size:13px;
-				text-align:center;
-
-				background-color: #bfd1e5;
-				margin: 0px;
-				overflow: hidden;
-			}
-
-			#info {
-				position: absolute;
-				top: 0px; width: 100%;
-				padding: 5px;
-			}
-
-			a {
-
-				color: #a06851;
-			}
-
-		</style>
+		<link rel="stylesheet" type="text/css" href="css/mistral.css">
 	</head>
 	<body>
 
 		<div id="container"><br /><br /><br /><br /><br />Generating world...</div>
 
-		<script src="js/three.min.js"></script>
-
-		<script src="js/OrbitControls.js"></script>
-
-		<script src="js/ImprovedNoise.js"></script>
-		<script src="js/Detector.js"></script>
-		<script src="js/stats.min.js"></script>
+		<!--Three.js-->
+		<script src="js/three/three.min.js"></script>
+		<script src="js/three/OrbitControls.js"></script>
+		<script src="js/three/ImprovedNoise.js"></script>
+		<script src="js/three/Detector.js"></script>
+		<script src="js/three/stats.min.js"></script>
+		<script src="js/three/Mirror.js"></script>
+		<script src="js/three/WaterShader.js"></script>
+		<!--Game Scripts-->
+		<script src="js/Mistral.js"></script>
+		<!--Utils-->
+		<script src="js/utils/Utils.js"></script>
+		<script src="js/utils/Config.js"></script>
+		<!--World-->
+		<script src="js/world/World.js"></script>
+		<script src="js/world/SkyBox.js"></script>
+		<script src="js/world/Terrain.js"></script>
+		<script src="js/world/Water.js"></script>
+		<script src="js/world/WorldLight.js"></script>
+		<!--Controls-->
+		<script src="js/controls/Camera.js"></script>
+		<script src="js/controls/Controls.js"></script>
+		<script src="js/controls/ControlCenter.js"></script>
+		<script src="js/controls/Renderer.js"></script>
 
 		<script>
 
@@ -49,282 +43,10 @@
 				document.getElementById( 'container' ).innerHTML = "";
 
 			}
-
-			var container, stats;
-
-			var camera, controls, scene, renderer, light1;
-
-			var mesh, texture;
-
-			var worldWidth = 256, worldDepth = 256,
-			worldHalfWidth = worldWidth / 2, worldHalfDepth = worldDepth / 2;
-
-			var clock = new THREE.Clock();
-
-			var helper;
-
-			var raycaster = new THREE.Raycaster();
-			var mouse = new THREE.Vector2();
-
-			init();
-			animate();
-
-			function init() {
-
-				container = document.getElementById( 'container' );
-
-				camera = new THREE.PerspectiveCamera( 60, window.innerWidth / window.innerHeight, 1, 20000 );
-
-				scene = new THREE.Scene();
-
-				controls = new THREE.OrbitControls(camera);
-				controls.center.set( 0.0, 100.0, 0.0 );
-				controls.userPanSpeed = 100;
-
-				data = generateHeight( worldWidth, worldDepth );
-
-				controls.center.y = data[ worldHalfWidth + worldHalfDepth * worldWidth ] + 500;
-				camera.position.y =  controls.center.y + 2000;
-				camera.position.x = 2000;
-				
-				var geometry = new THREE.PlaneBufferGeometry( 22000, 22000, worldWidth - 1, worldDepth - 1 );
-				geometry.rotateX( - Math.PI / 2 );
-
-				var vertices = geometry.attributes.position.array;
-
-				for ( var i = 0, j = 0, l = vertices.length; i < l; i ++, j += 3 ) {
-
-					vertices[ j + 1 ] = data[ i ] * 10;
-
-				}
-
-				geometry.computeFaceNormals();
-
-//				texture = new THREE.CanvasTexture( generateTexture( data, worldWidth, worldDepth ) );
-//				texture.wrapS = THREE.ClampToEdgeWrapping;
-//				texture.wrapT = THREE.ClampToEdgeWrapping;
-
-//				mesh = new THREE.Mesh( geometry, new THREE.MeshLambertMaterial( { map: texture } ) );
-				mesh = new THREE.Mesh( geometry, new THREE.MeshLambertMaterial( { } ) );
-				mesh.castShadow = true;
-				mesh.receiveShadow = true;
-				scene.add( mesh );
-
-				var light = new THREE.DirectionalLight( 0xff0040 );
-				light.position.set(2000,2000,500);
-				light.target.position.set(6000,0,3000);
-		//		light.shadowCameraVisible = true;
-				light.castShadow = true;
-				light.shadowDarkness = true;
-				scene.add( light );
-
-				renderer = new THREE.WebGLRenderer();
-				renderer.setClearColor( 0xbfd1e5 );
-				renderer.setPixelRatio( window.devicePixelRatio );
-				renderer.setSize( window.innerWidth, window.innerHeight );
-				renderer.shadowMapEnabled = true;
-				renderer.shadowMapType = THREE.PCFSoftShadowMap;
-
-				container.innerHTML = "";
-
-				container.appendChild( renderer.domElement );
-				container.addEventListener( 'mousemove', onMouseMove, false );
-
-				stats = new Stats();
-				stats.domElement.style.position = 'absolute';
-				stats.domElement.style.top = '0px';
-				container.appendChild( stats.domElement );
-
-				//
-
-				window.addEventListener( 'resize', onWindowResize, false );
-
-			}
-
-			function onWindowResize() {
-
-				camera.aspect = window.innerWidth / window.innerHeight;
-				camera.updateProjectionMatrix();
-
-				renderer.setSize( window.innerWidth, window.innerHeight );
-
-			}
-
-			function generateHeight( width, height ) {
-
-				var size = width * height, data = new Uint8Array( size ),
-				perlin = new ImprovedNoise(), quality = 1, z = Math.random() * 100;
-
-				for ( var j = 0; j < 4; j ++ ) {
-
-					for ( var i = 0; i < size; i ++ ) {
-
-						var x = i % width, y = ~~ ( i / width );
-						data[ i ] += Math.abs( perlin.noise( x / quality, y / quality, z ) * quality * 1 );
-
-					}
-
-					quality *= 5;
-
-				}
-
-				return data;
-
-			}
-
-			function generateTexture( data, width, height ) {
-
-				var canvas, canvasScaled, context, image, imageData,
-				level, diff, vector3, sun, shade;
-
-				vector3 = new THREE.Vector3( 0, 0, 0 );
-
-				sun = new THREE.Vector3( 1, 1, 1 );
-				sun.normalize();
-
-				canvas = document.createElement( 'canvas' );
-				canvas.width = width;
-				canvas.height = height;
-
-				context = canvas.getContext( '2d' );
-				context.fillStyle = '#000';
-				context.fillRect( 0, 0, width*8, height*8 );
-
-				image = context.getImageData( 0, 0, canvas.width, canvas.height );
-				imageData = image.data;
-				var terrainType, modI, x, y;
-				console.log(imageData.length);
-
-				for ( var i = 0, j = 0, l = imageData.length; i < l; i += 4, j ++ ) {
-
-					vector3.x = data[ j - 2 ] - data[ j + 2 ];
-					vector3.y = 2;
-					vector3.z = data[ j - width * 2 ] - data[ j + width * 2 ];
-					vector3.normalize();
-
-					shade = vector3.dot( sun );
-
-					modI = Math.floor(i/4);
-					x = i % width;
-					y = ~~ ( i / width);
-					terrainType = getTerrainType(x,y,width/2,height/2);
-
-					var r, g, b;
-					switch (terrainType) {
-						case "sea":
-							r = ( 120 + shade * 90 ) * ( 0.3 + data[ j ] * 0.007 );
-							g = ( 120 + shade * 80 ) * ( 0.3 + data[ j ] * 0.007 );
-							b = ( 0 - (shade * 40) ) * 0 * ( 0.4 + data[ j ] * 0.007 );
-							break;
-						case "beach":
-							r = ( 200 + shade * 100 ) * ( 0.4 + data[ j ] * 0.007 );
-							g = ( 200 + shade * 100 ) * ( 0.4 + data[ j ] * 0.007 );
-							b = ( 200 - (shade * 40) ) * 1 * ( 0.4 + data[ j ] * 0.007 );
-							break;
-						case "grass":
-							r = 0;//( 80 + shade * 90 ) * ( 0.3 + data[ j ] * 0.007 );
-							g = 256;//( 80 + shade * 80 ) * ( 0.3 + data[ j ] * 0.007 );
-							b = 0;//( 0 - (shade * 40) ) * 0 * ( 0.4 + data[ j ] * 0.007 );
-							break;
-						case "mountain":
-							r = ( 80 + shade * 90 ) * ( 0.3 + data[ j ] * 0.007 );
-							g = ( 80 + shade * 80 ) * ( 0.3 + data[ j ] * 0.007 );
-							b = ( 80 + (shade * 80) ) * ( 0.3 + data[ j ] * 0.007 );
-							break;
-					}
-
-					imageData[ i ] = r;
-					imageData[ i + 1 ] = g;					
-					imageData[ i + 2 ] = b;			
-				}
-
-				context.putImageData( image, 0, 0 );
-
-				// Scaled 4x
-
-				canvasScaled = document.createElement( 'canvas' );
-				canvasScaled.width = width * 4;
-				canvasScaled.height = height * 4;
-
-				context = canvasScaled.getContext( '2d' );
-				context.scale( 4, 4 );
-				context.drawImage( canvas, 0, 0 );
-
-				image = context.getImageData( 0, 0, canvasScaled.width, canvasScaled.height );
-				imageData = image.data;
-
-				for ( var i = 0, l = imageData.length; i < l; i += 4 ) {
-
-					var v = ~~ ( Math.random() * 5 );
-
-					imageData[ i ] += v;
-					imageData[ i + 1 ] += v;
-					imageData[ i + 2 ] += v;
-
-				}
-
-				context.putImageData( image, 0, 0 );
-
-				return canvasScaled;
-
-			}
-
-			function getTerrainType(x,y,width,height) {
-				var d = distance([x,y],[width,height]);
-				if (d > (width * 0.6)) {
-					return "sea";
-				}else if (d > (width * 0.5)) {
-					return "beach";
-				}else if (d > (width * 0.1)) {
-					return "grass";
-				}else if (d > 0) {
-					return "mountain";
-				}
-
-			}
-
-			//
-
-			function animate() {
-
-				requestAnimationFrame( animate );
-
-				render();
-				stats.update();
-
-			}
-
-			function render() {
-
-				controls.update( clock.getDelta() );
-				renderer.render( scene, camera );
-
-			}
-
-			function onMouseMove( event ) {
-
-				mouse.x = ( event.clientX / renderer.domElement.clientWidth ) * 2 - 1;
-				mouse.y = - ( event.clientY / renderer.domElement.clientHeight ) * 2 + 1;
-				raycaster.setFromCamera( mouse, camera );
-
-				// See if the ray from the camera into the world hits one of our meshes
-				var intersects = raycaster.intersectObject( mesh );
-
-				// Toggle rotation bool for meshes that we clicked
-				if ( intersects.length > 0 ) {
-
-					helper.position.set( 0, 0, 0 );
-					helper.lookAt( intersects[ 0 ].face.normal );
-
-					helper.position.copy( intersects[ 0 ].point );
-
-				}
-
-			}
-
-			function distance(p1, p2) {
-				return Math.sqrt(Math.pow(p2[0] - p1[0],2)+Math.pow(p2[1]-p1[1],2));
-			}
+			var Config = new Config();
+			var Client = new Mistral();
+			Client.init();
+			Client.run();
 
 		</script>
 

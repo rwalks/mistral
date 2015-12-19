@@ -5,10 +5,9 @@ var fs = require('fs');
 var path = require('path');
 var exec = require('child_process').exec;
 
-var server = new Server('localhost', 27017, {auto_reconnect: true});
-
-var app = http.createServer(handler),
-    app.listen(80);
+var app = http.createServer(handler);
+app.listen(8080);
+console.log('Mistral Active...');
 
 function handler (req, res) {
     console.log('request starting...');
@@ -19,9 +18,7 @@ function handler (req, res) {
 		res.end();
 		return;
 	}
-    if (filePath == './')
-        filePath = indexPath;
-    if (filePath == './server.js')
+    if (filePath == './' || filePath == './server.js') {
         filePath = indexPath;
     }
     console.log(filePath);
