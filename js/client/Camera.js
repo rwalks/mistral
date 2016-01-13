@@ -4,6 +4,9 @@ function Camera() {
 
 	this.init = function() {
 		camera = new THREE.PerspectiveCamera( 60, window.innerWidth / window.innerHeight, 1, 2000000 );
+		camera.zoom = 20;
+		//camera.eulerOrder = "YXZ";
+		this.setPosition(0,300,-1000);
 	}
 
 	this.update = function() {
@@ -13,6 +16,11 @@ function Camera() {
 		if (x) { camera.position.x = x; }
 		if (y) { camera.position.y = y; }
 		if (z) { camera.position.z = z; }
+	}
+
+	this.resize = function() {
+		camera.aspect = window.innerWidth / window.innerHeight;
+		camera.updateProjectionMatrix();
 	}
 
 	this.getCamera = function() { return camera; }
