@@ -28,22 +28,21 @@ function Collider() {
 		var terrainSafe = false;
 		var originPoint = new THREE.Vector3().copy(origin);
 		var maxChecks = 2;
+		//set onGround to slope
 		var onGround = false;
 		while(!terrainSafe) {
 			var dvNorm = new THREE.Vector3().copy(velocity).normalize();
 			var colls = this.terrainCollide(originPoint,dvNorm);
 			if (colls.length > 0 && colls[0].distance <= velocity.length()) {
-				onGround = true;
+				onGround = onGround || 1;
 				if ( maxChecks <= 0 ) {
 					velocity.set(0,0,0);
 					terrainSafe = true;
 				} else {
 					maxChecks -= 1;
 					var faceNorm = new THREE.Vector3().copy(colls[0].face.normal);
-					var slope = upRay.angleTo(faceNorm);
-					//if (velocity.y < 0.0001 && Math.abs(slope) < Math.PI/4) {
-					//	velocity.setY(-velocity.y * 0.2);
-					//}
+					//set onGround to slope
+					onGround = upRay.angleTo(faceNorm);
 					velocity.projectOnPlane(faceNorm);
 				}
 			} else {

@@ -40,7 +40,7 @@ function PlayerEntity() {
 	var targetPhi = 0;
 	var dPhi;
 	//friction
-	var groundCoefficient = 1;
+	var groundCoefficient = 2;
 	var airCoefficient = 0.3;
 	var waterCoefficient = 0.6;
 	
@@ -137,6 +137,9 @@ function PlayerEntity() {
 
 	function checkTerrain(collider) {
 		onGround = collider.checkTerrainCollisions(mesh.position,velocity);
+		if (onGround && Math.abs(onGround) < Math.PI/10 && velocity.length() < 7) {
+			velocity.multiplyScalar(0.9);
+		}
 	}
 
 	function applyFriction(deltaT) {
@@ -148,7 +151,7 @@ function PlayerEntity() {
 		}
 		//ground friction
 		if ( onGround ) {
-			velocity.multiplyScalar(1 - (deltaT * groundCoefficient));
+			velocity.multiplyScalar(Math.max(0,1 - (deltaT * groundCoefficient)));
 		}
 	}
 
@@ -207,6 +210,7 @@ function PlayerEntity() {
 	}
 
 	function applyCommands(deltaT) {
+		var movementCommand = false;
 		//translate
 		if(commandState.forward) { deltaV.setZ(pickDV(walkV,walkVW,deltaT)); }
 		if(commandState.reverse) { deltaV.setZ(pickDV(reverseV,reverseVW,deltaT)); }

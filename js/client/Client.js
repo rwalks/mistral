@@ -41,6 +41,24 @@ function Client() {
 			}
 		}
 		messenger.receive(playerData);
+		/* mock horses //
+		for(var i = 0; i < 60; i++) {
+			px = Math.floor(Config.width * (-0.2 + (Math.random() * 0.4)));
+			pz = Math.floor(Config.depth * (-0.2 + (Math.random() * 0.4)));
+			py = Config.height;//colly.terrainAltitude(px,pz) + 800;
+			playerPos = [px,py,pz];
+			playerData = {
+				type: "update",
+				playerId: i+2,
+				data: {
+					players: [
+						{id: i+2, position: playerPos, velocity: [0,0,5], theta: 0, phi: 0, state: 'alive'}
+					]
+				}
+			}
+			messenger.receive(playerData);
+		}
+	    */
 	}
 
 	function update(deltaT) {
