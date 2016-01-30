@@ -7,12 +7,13 @@ function Config() {
 	this.tileWidth = 16;
 	this.tileDepth = 16;
 
-	this.seaLevel = Math.floor(this.height * 0.25);
 
 	//real coords
 	this.width = 800000;
 	this.depth = 800000;
 	this.height = 100000;
+
+	this.seaLevel = Math.floor(this.height * 0.25);
 
 	this.showStats = true;
 

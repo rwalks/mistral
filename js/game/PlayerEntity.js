@@ -10,22 +10,27 @@ function PlayerEntity() {
 	//speeds
 	//ground
 	var strafeV = 10;
-	var walkV = 60;
+	var walkV = 200;
 	var reverseV = -20;
 	var jumpV = 50;
 	var terminalV = -200;
 	var rotV = Math.PI / 3;
-	var maxV = 200;
-	var maxVG = 50;
+	var maxV = 2000;
+	var maxVG = 500;
 	var phiV = Math.PI / 6;
+	var pitchV = Math.PI / 6;
+	var gVeloRotTrack = 0.8;
+	var aVeloRotTrack = 0.6;
 	//water
 	var strafeVW = 50;
-	var walkVW = 90;
+	var walkVW = 40;
 	var reverseVW = -50;
 	var jumpVW = 50;
 	var terminalVW = -100;
 	var rotVW = Math.PI / 3;
 	var maxVW = 60;
+	var pitchVW = Math.PI / 4;
+	var wVeloRotTrack = 0.2;
 	//states
 	var state;
 	var velocity = new THREE.Vector3();
@@ -39,6 +44,7 @@ function PlayerEntity() {
 	var phi = 0;
 	var targetPhi = 0;
 	var dPhi;
+	var movementCommand = false;
 	//friction
 	var groundCoefficient = 2;
 	var airCoefficient = 0.3;
@@ -67,10 +73,9 @@ function PlayerEntity() {
 		updateVariables(deltaT);
 		applyCommands(deltaT);
 		applyFriction(deltaT);
-	//	phi += dPhi;
+		phi += dPhi;
 		theta += dTheta;
-		rotateX(deltaV,phi);
-		rotateY(deltaV,theta);
+		updateRotations();
 		applyForces(deltaT);
 		velocity.add(deltaV);
 		capVelocity();
@@ -89,7 +94,14 @@ function PlayerEntity() {
 		dPhi = 0;
 		dTheta = 0;
 		jumpCounter = jumpCounter < 0 ? jumpCounter : jumpCounter - deltaT;
-		underwater = mesh.position.z <= Config.seaLevel;
+		underwater = mesh.position.y <= Config.seaLevel;
+	}
+
+	function updateRotations() {
+		rotateX(deltaV,phi);
+		rotateY(deltaV,theta);
+		rotateX(velocity,(dPhi * (onGround ? gVeloRotTrack : (underwater ? wVeloRotTrack : aVeloRotTrack))));
+		rotateY(velocity,(dTheta * (onGround ? gVeloRotTrack : (underwater ? wVeloRotTrack : aVeloRotTrack))));
 	}
 
 	function updatePhi(deltaT) {
@@ -137,8 +149,8 @@ function PlayerEntity() {
 
 	function checkTerrain(collider) {
 		onGround = collider.checkTerrainCollisions(mesh.position,velocity);
-		if (onGround && Math.abs(onGround) < Math.PI/10 && velocity.length() < 7) {
-			velocity.multiplyScalar(0.9);
+		if (!movementCommand && onGround && Math.abs(onGround) < Math.PI/6 && velocity.length() <= -Config.gravity) {
+			velocity.multiplyScalar(0.5);
 		}
 	}
 
@@ -151,8 +163,10 @@ function PlayerEntity() {
 		}
 		//ground friction
 		if ( onGround ) {
+			console.log('ground');
 			velocity.multiplyScalar(Math.max(0,1 - (deltaT * groundCoefficient)));
-		}
+		} else { console.log( underwater ? 'underwater' : 'air'); }
+		//}
 	}
 
 	function createMesh() {
@@ -191,6 +205,7 @@ function PlayerEntity() {
 	}
 
 	function pickDV(groundV,waterV,deltaT) {
+		movementCommand = true;
 		return deltaT * (underwater ? waterV : groundV);
 	}
 
@@ -210,7 +225,7 @@ function PlayerEntity() {
 	}
 
 	function applyCommands(deltaT) {
-		var movementCommand = false;
+		movementCommand = false;
 		//translate
 		if(commandState.forward) { deltaV.setZ(pickDV(walkV,walkVW,deltaT)); }
 		if(commandState.reverse) { deltaV.setZ(pickDV(reverseV,reverseVW,deltaT)); }
@@ -221,7 +236,7 @@ function PlayerEntity() {
 		//rotate
 		if(commandState.rotLeft) { dTheta += pickDV(rotV,rotVW,deltaT); }
 		if(commandState.rotRight) { dTheta -= pickDV(rotV,rotVW,deltaT); }
-//		if(commandState.rotUp) { dPhi += 0.01; }
-//		if(commandState.rotDown) { dPhi -= 0.01; }
+		if(commandState.rotUp) { if(!onGround) { dPhi += pickDV(pitchV,pitchVW,deltaT); } }
+		if(commandState.rotDown) { if(!onGround) { dPhi -= pickDV(pitchV,pitchVW,deltaT); } }
 	}
 }

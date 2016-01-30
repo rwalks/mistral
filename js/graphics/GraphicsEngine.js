@@ -17,7 +17,7 @@ function GraphicsEngine() {
 		renderer.init(scene,camera);
 		skyBox.init(scene);
 		worldLight.init(scene);
-	//	waterG.init(scene, renderer.getRenderer(), camera.getCamera(), worldLight.getSun());
+		waterG.init(scene);
 		terrainTiles = tTiles;
 		for(var t = 0; t < terrainTiles.length; t++){
 			scene.add(terrainTiles[t]);
@@ -36,7 +36,7 @@ function GraphicsEngine() {
 	}
 
 	this.update = function(engPlayers) {
-		//waterG.update();
+		waterG.update();
 		renderer.update( scene, camera.getCamera() );
 		if(stats) {
 			stats.update();

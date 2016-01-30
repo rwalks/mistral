@@ -63,9 +63,11 @@ function Client() {
 
 	function update(deltaT) {
 		var time = performance.now() * 0.001;
-	//	camera.getCamera().lookAt(player.mesh);
 		gameEngine.update(deltaT);
 		controls.update(deltaT, player);
+	//	if(player.mesh){
+	//	camera.getCamera().lookAt(player.mesh);
+	//	}
 		graphicsEngine.update(gameEngine.getPlayers());
 	}
 
